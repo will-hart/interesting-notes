@@ -1,0 +1,169 @@
+\chapter{Quantitative Finance}
+\label{ch:quantitative-finance}
+\index{Quantitative Finance}
+
+\newthought{This section deals with some applications of quantitative finance, 
+both computational and theoretical. }
+
+\section{Equity Mathematical Models}
+\index{Equity Mathematical Models}
+Equities and finance are heavily influenced by random events (see \cite{fooledbyrandomness} for a detailed philosophical discussion). As such, the analysis of financial instruments lends itself to a stochastic process.
+
+A {\em Geometric Brownian Motion}\index{Geometric Brownian Motion} (GBM) equation (a form of stochastic differential equation, or SDE) can be used to approximate a random process over time. In its continuous form this looks like \cite{advancedquantcpp}:
+\begin{equation}
+ds = \mu Sdt+\sigma SdW
+\end{equation}
+This breaks the movement of a stock price down into two key effects:
+
+\begin{itemize}
+	\item a deterministic effect (the left of the plus sign)
+	\item a stochastic effect (the right of the plus sign)
+\end{itemize}
+In the equation, $\mu$ is known as {\it drift}, $\sigma$ is {\it volatility}, $S$ is the stock price, $dt$ is the change in time and $dW$ is an increment in a {\it Weiner process}.
+
+As equity markets are a discrete process, this equation must be transformed into a discrete equation. 
+\begin{equation}
+S_{t+1}=S_t(1+r\Delta{}t+\sigma\varepsilon_t \sqrt{\Delta{}t})
+\end{equation}
+Here $\varepsilon$ is a sample from a gaussian distribution with zero mean and standard deviation of 1 (i.e. $N(0,1)$) and $r$ is the risk free rate of return. This equation can be solved iteratively for a given time period if $r$, $\sigma$, $\varepsilon$ and $S_0$ are provided.
+
+Similar formulations can be determined for foreign exchange:
+\begin{equation}
+X_{t+1} = X_t(1+(r_d-r_f)\Delta{}t+\sigma\varepsilon_t\sqrt{\Delta{}t})
+\label{eq:foreignexchangemodel}
+\end{equation}
+where $r_d$ and $r_f$ are the domestic and foreign fisk free rates of return. 
+
+
+
+\section{Structural and Intensity Models}
+\TODO See \cite{advancedquantcpp} chapter 2.
+
+\section{Monte Carlo Simulation}
+\index{Monte Carlo Simulation}
+Monte Carlo simulation is a method of estimating a probabilistic outcome through a high quantity of simulations. In a quantitative finance context, we may wish to estimate the future price of an equity based on use of a GBM equation simulated $M$ times. 
+
+For instance the process could be as follows for calculating a call option derivative based on estimate the price of a stock using Monte Carlo simulation:
+
+\begin{enumerate}
+	\item Generate $M$ different ``trajectories'' for the stock using a GBM simulation from time $t=0$ to time $t=T$. This generates a set of $N$ price estimates for $M$ different simulations, with the notation:
+	\begin{equation}
+		\{S_i^j\}\qquad i = 0...N,\qquad j=1...M
+	\end{equation}
+	This produces a vector of $M$ values for $S_T$, 
+	\begin{equation}
+		\{S_T^i\}\qquad i = 0...M
+	\end{equation}
+	
+	\item We next compute the pay off for each stock value. This is given by 
+	\begin{equation}
+		H(S_T^i)\qquad i=1...M
+	\end{equation}
+	Where 
+	\begin{equation}
+		H(S_T)=max(S_T-K,0)
+	\end{equation}
+	and $K$ is the actual price of the equity or premium. The expected pay off can then be computed by the average of all pay offs:
+	\begin{equation}
+		E[H(S_T^i)]=\frac{1}{M}\Sigma_{i=1}^{M}H(S_T^i)
+	\end{equation}
+	
+	\item The item should then be discounted to present value, by either applying a discount factor $DF_T$ or 
+	\begin{equation}
+		\pi = e^{-rT}\times E[H(S_T)]
+	\end{equation}
+	
+	Where $\pi$ is the value of the derivative.
+\end{enumerate}
+
+
+
+\section{Binomial Trees \cite{advancedquantcpp}}
+\index{Binomial Trees}
+
+This approach builds a tree of possible prices. At each stage, the underlying can be assumed to go up or down by a given amount. The amount of change up ($u$) or down ($d$) is described by
+\begin{equation}
+	u=e^{\sigma\sqrt{\Delta{}t}}
+\end{equation}
+\begin{equation}
+	d=e^{-\sigma\sqrt{\Delta{}t}}
+\end{equation}
+The probability of an equity going up $p$ is
+\begin{equation}
+p=\frac{e^{r\Delta{}t}-d}{u-d}
+\end{equation}
+The probability of the underlying going down is $1-p$. The binomial tree is then built in the following phases:
+
+\begin{enumerate}
+	\item Construct a tree where each level corresponds to a time step in the simulation period from $t=0$ to $t=T$. For example in two simulation steps, 
+	\begin{equation}
+		At = 0, S = S_0
+	\end{equation}
+	\begin{equation}
+		At = t_1, S = uS_0,\qquad dS_0
+	\end{equation}
+	\begin{equation}
+		At = t_2, S = u^2S_0,\qquad udS_0,\qquad udS_0,\qquad d^2S_0
+	\end{equation}
+	Note that the central value at the last period is shared between adjacent nodes, hence there are only three distinct estimates after $N=2$ steps.
+	
+	This produces a number of prices at each time step. The notation is based on the estimate number $k$ at time T. There are $N$ time steps
+	\begin{equation}
+		\{S_T^k\}\qquad k=1...N+1
+	\end{equation}
+	
+	\item Once the tree has been built, the payoff $H(S_T^k)$ should be calculated for each $S_T^k$
+	
+	\item Finally the tree is traversed back up towards the root node, calculating the discounted weighted probability of each node. If we define a given node (not a leaf, i.e. $t\neq T$) it has two children, one for the up price (denoted $S_T^u$) and one for the down price, $S_T^d$. The value for the parent node is given by 
+	\begin{equation}
+	V_{T-1}^k = e^{-r\Delta{}t}[pH(S_T^u) + (1-p)H(S_T^d)]
+	\end{equation}
+	in this case $V_T^l$ is shorthand for $H(S_T^k)$
+	
+	\item Once the tree has been traversed back to the top, the value of the derivative $\pi=V_1^1$
+\end{enumerate}
+
+
+\section{Finite Difference Method}
+\index{Finite Difference Method}
+
+The finite difference method is a method for discretising a differential equation.\cite{advancedquantcpp} In the quantitative finance approach, we want to discretise partial differential equations (PDEs). The finite differences method is based on the relationship:
+\begin{equation}
+f(x) = \frac{df}{dx} \approx \frac{\Delta f}{\Delta x} = \frac{f_{i+1}-f_i}{\Delta x}
+\end{equation}
+The most important PDE in finance is the {\em Black-Scholes PDE}, which is given by:
+\begin{equation}
+\frac{\delta V}{\delta t} + \frac{1}{2}\sigma^2S^2\frac{\delta^2V}{\delta S^2}+rS\frac{\delta V}{\delta S}-rV=0
+\label{eq:blackscholeseq}
+\end{equation}
+This is usually solved in the $S$ and $t$ axes, where $S\in [a,b]$ and $t\in [0,T]$. The domain of this equation is said to be 
+\begin{equation}
+\Omega=\{(S,t)\forall S\in [a,b]\times t\in [0,T]\}
+\end{equation}
+In other words, as the finite difference method is solving some partial differential equation in $S$ and $t$, the solution space is the rectangular domain defined by the ranges of $S$ and $t$. For a European call, 
+\begin{equation}
+	V(S,T) = max(S-K,0)
+\end{equation}
+The boundary conditions are $V(a,t)=0$ and $V(b,t)=S$. This equation can be transformed with some variable substitution so that 
+\begin{equation}
+\frac{\delta u}{\delta\tau}=\frac{\delta^2 u}{\delta x}\qquad -\infty<x<\infty, \tau>0
+\end{equation}
+This is a dimensionless PDE with a new solution domain $\Omega=\{(x,\tau)\}$. The payoff relationship therefore becomes
+\sidenote{Where $k=\frac{r}{0.5\times\sigma^2}$}
+\begin{equation}
+u(x,0) = max(e^{\frac{1}{2}(k+1)x}-e^{\frac{1}{2}(k-1)x},0)
+\end{equation}
+Using finite differences, the return can be described as\sidenote{Where $\alpha=\frac{\Delta\tau}{(\Delta x)^2}$}
+\begin{equation}
+u_{i,j+1}=\alpha u_{i+1,j}+(1-2\alpha)u_{i,j}+\alpha u_{i-1,j}
+\end{equation}
+This relationship can be solved iteratively, using the following steps:
+
+\begin{enumerate}
+	\item Discretise the domain into N space divisions of $dS$ and M time divisions of $dT$. Use these to determine the steps $\Delta\tau,\Delta x$.
+	\item Use finite differences to approximate the derivatives
+	\item Calculate the results of the equation iteratively for each time step
+\end{enumerate}
+
+For a worked example, see \cite{advancedquantcpp}, end of chapter 3.
+
