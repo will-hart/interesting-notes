@@ -9,7 +9,7 @@ both computational and theoretical. }
 \index{Equity Mathematical Models}
 Equities and finance are heavily influenced by random events (see \cite{fooledbyrandomness} for a detailed philosophical discussion). As such, the analysis of financial instruments lends itself to a stochastic process.
 
-A {\em Geometric Brownian Motion}\index{Geometric Brownian Motion} (GBM) equation (a form of stochastic differential equation, or SDE) can be used to approximate a random process over time. In its continuous form this looks like \cite{advancedquantcpp}:
+A {\em Geometric Brownian Motion}\index{Geometric Brownian Motion} (GBM) equation (a form of stochastic differential equation, or SDE known as the Black-Sholes-Merton equation\cite{pyfinanceoreilly}) can be used to approximate a random process over time. In its continuous form this looks like \cite{advancedquantcpp}:
 \begin{equation}
 ds = \mu Sdt+\sigma SdW
 \end{equation}
@@ -27,7 +27,11 @@ S_{t+1}=S_t(1+r\Delta{}t+\sigma\varepsilon_t \sqrt{\Delta{}t})
 \end{equation}
 Here $\varepsilon$ is a sample from a gaussian distribution with zero mean and standard deviation of 1 (i.e. $N(0,1)$) and $r$ is the risk free rate of return. This equation can be solved iteratively for a given time period if $r$, $\sigma$, $\varepsilon$ and $S_0$ are provided.
 
-Similar formulations can be determined for foreign exchange:
+Another formulation for pricing European Call options gives a similar result of the discretised SDE\cite{pyfinanceoreilly}:
+\begin{equation}
+S_t=S_{t-\Delta t}e^{(r-\frac{1}{2}\sigma^2)\Delta t+\sigma\sqrt{\Delta t}z_t}
+\end{equation} 
+In this instance, $z_t$ represents the random variable. Similar formulations can be determined for foreign exchange:
 \begin{equation}
 X_{t+1} = X_t(1+(r_d-r_f)\Delta{}t+\sigma\varepsilon_t\sqrt{\Delta{}t})
 \label{eq:foreignexchangemodel}
@@ -131,7 +135,8 @@ The finite difference method is a method for discretising a differential equatio
 \begin{equation}
 f(x) = \frac{df}{dx} \approx \frac{\Delta f}{\Delta x} = \frac{f_{i+1}-f_i}{\Delta x}
 \end{equation}
-The most important PDE in finance is the {\em Black-Scholes PDE}, which is given by:
+The most important PDE in finance is the {\em Black-Scholes PDE}
+\index{Black-Scholes PDE}, which is given by:
 \begin{equation}
 \frac{\delta V}{\delta t} + \frac{1}{2}\sigma^2S^2\frac{\delta^2V}{\delta S^2}+rS\frac{\delta V}{\delta S}-rV=0
 \label{eq:blackscholeseq}
